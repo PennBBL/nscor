@@ -3,3 +3,4 @@
 *.csv
 *plots/*
 *results/*
+*DS_Store*
