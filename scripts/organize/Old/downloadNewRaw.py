@@ -2,7 +2,7 @@
 ### on flywheel to PMACS
 ###
 ### Ellyn Butler
-### January 13, 2021
+### January 6, 2020
 
 
 import subprocess as sub
@@ -25,7 +25,7 @@ import zipfile
 #outdir = '/project/bbl_projects/nscor/data/raw/' # Path on PMACS
 
 fw = flywheel.Client()
-proj = fw.lookup('bbl/NSCOR_831353') #NSCOR_831353
+proj = fw.lookup('bbl/NASA_821559') #NSCOR_831353
 subjects = proj.subjects()
 
 if not os.path.exists(outdir):
