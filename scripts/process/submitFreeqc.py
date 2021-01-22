@@ -1,35 +1,53 @@
 ### This script submits qsub jobs calling the singularity container for freeqc,
-### and creates the output directory structure for freeqc on PMACS.
+### and creates the output directory structure for freeqc on PMACS. This is done
+### specifically with Kosha's freesurfer output, which was run outside of fMRIPrep,
+### and does not have the BIDS compliant session labels. As such, the BIDS labels were
+### supplied to the freeqc container, but the old ones will be merged in in the
+### complete tabulated data.
 ###
 ### Ellyn Butler
-### October 15, 2020 - October 16, 2020
+### January 21, 2021
 
 import os
 import shutil
 import re
 import logging
+import pandas as pd
 
-indir = '/project/ExtraLong/data/freesurferCrossSectional/freesurfer/'
-outdir = '/project/ExtraLong/data/freesurferCrossSectional/freeqc/'
-subcol = 'bblid'
+indir = '/project/bbl_projects/nscor/data/processed/T1/freesurfer/'
+outdir = '/project/bbl_projects/nscor/data/processed/T1/freeqc/'
+subcol = 'sublabel'
 freelic = '/project/ExtraLong/data/license.txt'
 
-for subj in os.listdir(indir):
-    if not os.path.exists(outdir+subj):
-        os.mkdir(outdir+subj)
-    for ses in os.listdir(indir+subj):
-        if not os.path.exists(outdir+subj+'/'+ses):
-            os.mkdir(outdir+subj+'/'+ses)
-        ses_indir = indir+subj+'/'+ses
-        ses_outdir = outdir+subj+'/'+ses
-        cmd = ['SINGULARITYENV_SUBCOL='+subcol, 'SINGULARITYENV_SUBNAME='+subj,
-            'SINGULARITYENV_SESNAME='+ses, 'singularity', 'run', '--writable-tmpfs', '--cleanenv',
+labels = pd.read_csv('/project/bbl_projects/nscor/data/info/labelmapping.csv') #WAIT TO RUN UNTIL UPDATED
+
+for sublabel in labels['sublabel']:
+    if not os.path.exists(outdir+'sub-'+sublabel):
+        os.mkdir(outdir+'sub-'+sublabel)
+    for seslabel in labels['seslabel'][labels['sublabel'] == sublabel]:
+        if not os.path.exists(outdir+'sub-'+sublabel+'/ses-'+seslabel):
+            os.mkdir(outdir+'sub-'+sublabel+'/ses-'+seslabel)
+        # Is Kosha's directory named by the FW_sublabel? Or FW_seslabel?
+        FW_sublabel = labels.loc[(labels['sublabel'] == sublabel) & (labels['seslabel'] == seslabel)]['FW_sublabel'].tolist()[0]
+        FW_seslabel = labels.loc[(labels['sublabel'] == sublabel) & (labels['seslabel'] == seslabel)]['FW_seslabel'].tolist()[0]
+        if FW_sublabel in os.listdir(indir):
+            ses_indir = indir+FW_sublabel
+        elif FW_seslabel in os.listdir(indir):
+            ses_indir = indir+FW_seslabel
+        elif FW_sublabel+'_'+FW_seslabel in os.listdir(indir):
+            ses_indir = indir+FW_sublabel+'_'+FW_seslabel
+        else:
+            os.system('echo sub-'+sublabel+' ses-'+seslabel+' > '+outdir+'unmapableSessions.csv')
+        ses_outdir = outdir+'sub-'+sublabel+'/ses-'+seslabel
+        cmd = ['SINGULARITYENV_SUBCOL='+subcol, 'SINGULARITYENV_SUBNAME=sub-'+sublabel,
+            'SINGULARITYENV_SESNAME=ses-'+seslabel, 'singularity', 'run', '--writable-tmpfs', '--cleanenv',
             '-B', ses_indir+':/input/data', '-B', freelic+':/input/license/license.txt',
             '-B', ses_outdir+':/output', '/project/ExtraLong/images/freeqc_0.0.9.sif']
+            #0.0.10 is having a freesurfer license issue, but I did fix the sublabel column
         freeqc_script = ses_outdir+'/freeqc_run.sh'
         os.system('echo '+' '.join(cmd)+' > '+freeqc_script)
         os.system('chmod +x '+freeqc_script)
-        os.system('bsub '+freeqc_script)
+        os.system('bsub -o '+ses_outdir+'/jobinfo.log '+freeqc_script)
 
 
 # Don't mount home to singularity

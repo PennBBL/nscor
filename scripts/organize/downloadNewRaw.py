@@ -2,7 +2,7 @@
 ### on flywheel to PMACS
 ###
 ### Ellyn Butler
-### January 14, 2021
+### January 14, 2021 - January 21, 2021
 
 
 import subprocess as sub
@@ -35,12 +35,14 @@ labelmapping = {'FW_sublabel':[], 'FW_seslabel':[], 'sublabel':[], 'seslabel':[]
 
 for subj in subjects:
     FW_sublabel = subj['label']
-    labelmapping['FW_sublabel'].append(FW_sublabel)
+    #if FW_sublabel in ['20475', '891296N', '891451N', '891462N']:
+    #    break
     sublabel = FW_sublabel.replace('_', '')
-    labelmapping['sublabel'].append(sublabel)
     if not os.path.exists(outdir+'sub-'+sublabel):
         os.mkdir(outdir+'sub-'+sublabel)
     for ses in subj.sessions():
+        labelmapping['FW_sublabel'].append(FW_sublabel)
+        labelmapping['sublabel'].append(sublabel)
         ses = ses.reload()
         FW_seslabel = ses['label']
         labelmapping['FW_seslabel'].append(FW_seslabel)
@@ -58,6 +60,7 @@ for subj in subjects:
         # If not, print problematic subject info to txt file
         if not sesdates['date'].isnull().values.any():
             sesdates = sesdates.sort_values(by=['date'])
+            sesdates.index = list(range(sesdates.shape[0]))
             visit = sesdates.index[sesdates['FW_seslabel'] == FW_seslabel] + 1
             visit = visit.tolist()[0]
         elif 'Pre' in sesdates['FW_seslabel'][0] or 'Post' in sesdates['FW_seslabel'][0]:
@@ -111,7 +114,7 @@ for subj in subjects:
             print('sub-'+sublabel+' ses-'+seslabel+' has previously downloaded content')
 
 labelmapping_df = pd.DataFrame.from_dict(labelmapping)
-labelmapping_df.to_csv(index=False)
+labelmapping_df.to_csv('/project/bbl_projects/nscor/data/info/labelmapping.csv', index=False)
 
 # Check the number of files for each subject
 for subj in subjects:

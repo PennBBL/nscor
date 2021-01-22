@@ -1,7 +1,7 @@
 ### This script combines each type of freeqc output into a csv
 ###
 ### Ellyn Butler
-### October 19, 2020
+### January 21, 2021
 
 import glob
 import csv
@@ -17,7 +17,7 @@ datatypes = ['aparc_area_lh', 'aparc_area_rh', 'aparc_meancurv_lh', 'aparc_meanc
     'rh_a2009s_thickness', 'rh_a2009s_volume', 'rh_DKTatlas_area', 'rh_DKTatlas_meancurv',
     'rh_DKTatlas_thickness', 'rh_DKTatlas_volume', 'wmparc_stats']
 
-basedir = '/project/ExtraLong/data/freesurferCrossSectional'
+basedir = '/project/bbl_projects/nscor/data/processed/T1'
 for datatype in datatypes:
     files = glob.glob(basedir+'/freeqc/sub*/ses*/*'+datatype+'.csv')
     df = pd.concat((pd.read_csv(f, header = 0) for f in files))
