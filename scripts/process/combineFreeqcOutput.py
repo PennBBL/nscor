@@ -22,5 +22,5 @@ for datatype in datatypes:
     files = glob.glob(basedir+'/freeqc/sub*/ses*/*'+datatype+'.csv')
     df = pd.concat((pd.read_csv(f, header = 0) for f in files))
     if 'bblid' not in df.columns:
-        df = df.rename(columns={'/scripts/idcols.py':'bblid'})
+        df = df.rename(columns={'/scripts/idcols.py':'sublabel'})
     df.to_csv(basedir+'/tabulated/'+datatype+'_'+datetime.today().strftime('%Y-%m-%d')+'.csv', index=False)
